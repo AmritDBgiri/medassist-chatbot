@@ -1,0 +1,25 @@
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+pydantic==2.7.1
+
+# LangChain core
+langchain==0.2.1
+langchain-core==0.2.1
+langchain-community==0.2.1
+langchain-google-genai==1.0.5
+
+# Google Gemini
+google-generativeai==0.5.4
+
+# Vector store
+faiss-cpu==1.8.0
+
+# Document loaders
+pypdf==4.2.0
+docx2txt==0.8
+beautifulsoup4==4.12.3
+requests==2.31.0
+
+# Utilities
+python-dotenv==1.0.1

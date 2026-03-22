@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MedAssist AI — Medical Chatbot</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface2: #f7fafc;
+    --border: #e2eaf3;
+    --accent: #0b6fdb;
+    --accent-light: #e8f1fd;
+    --accent2: #00b894;
+    --accent2-light: #e6f9f4;
+    --red: #e74c3c;
+    --red-light: #fdf0ee;
+    --text: #1a2332;
+    --text-dim: #6b7f99;
+    --shadow: 0 2px 12px rgba(11,111,219,0.08);
+    --shadow-lg: 0 8px 32px rgba(11,111,219,0.12);
+    --user-bubble: #0b6fdb;
+    --ai-bubble: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; display: flex; height: 100vh; }
+
+  .sidebar {
+    width: 300px; min-width: 300px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 24px 20px; gap: 20px;
+    overflow-y: auto;
+    box-shadow: 2px 0 12px rgba(11,111,219,0.06);
+  }
+  .logo { display: flex; align-items: center; gap: 12px; padding-bottom: 20px; border-bottom: 2px solid var(--border); }
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, #0b6fdb, #0099cc);
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; box-shadow: 0 4px 12px rgba(11,111,219,0.3);
+  }
+  .logo-text { font-size: 17px; font-weight: 800; }
+  .logo-sub { font-size: 10px; color: var(--accent); font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; }
+  .section-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; }
+
+  .disclaimer {
+    background: var(--red-light); border: 1px solid #fac9c4; border-radius: 10px;
+    padding: 10px 13px; font-size: 11px; color: #b03a2e; line-height: 1.5; display: flex; gap: 8px;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 18px;
+    text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface2);
+  }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: var(--accent-light); }
+  .upload-zone input { display: none; }
+  .upload-icon { font-size: 26px; margin-bottom: 6px; }
+  .upload-zone p { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+  .upload-zone strong { color: var(--accent); }
+
+  .upload-btn {
+    background: linear-gradient(135deg, var(--accent), #0099cc); color: #fff;
+    border: none; border-radius: 9px; padding: 10px 16px;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 13px;
+    cursor: pointer; width: 100%; margin-top: 10px;
+    transition: opacity 0.2s, transform 0.1s;
+    box-shadow: 0 4px 12px rgba(11,111,219,0.25);
+  }
+  .upload-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  .url-row { display: flex; gap: 8px; }
+  .url-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text); outline: none;
+  }
+  .url-input:focus { border-color: var(--accent); }
+  .url-input::placeholder { color: var(--text-dim); }
+  .url-btn {
+    background: var(--accent-light); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--accent); padding: 8px 14px;
+    cursor: pointer; font-size: 16px; font-weight: 700; transition: all 0.2s;
+  }
+  .url-btn:hover { background: var(--accent); color: #fff; }
+
+  .docs-list { display: flex; flex-direction: column; gap: 6px; }
+  .doc-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 12px;
+    display: flex; align-items: center; gap: 8px; font-size: 12px;
+    animation: fadeSlide 0.3s ease;
+  }
+  .doc-name { flex: 1; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .doc-badge { background: var(--accent2-light); color: var(--accent2); border-radius: 4px; padding: 2px 7px; font-size: 9px; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+  .clear-btn {
+    background: transparent; border: 1px solid #fac9c4; border-radius: 8px;
+    color: var(--red); padding: 9px; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .clear-btn:hover { background: var(--red-light); }
+
+  .status-row {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--accent2-light); border: 1px solid #b8eede;
+    border-radius: 8px; padding: 8px 12px;
+    font-size: 11px; color: #00856e; font-family: 'JetBrains Mono', monospace;
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); animation: pulse 2s infinite; flex-shrink: 0; }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .chat-header {
+    padding: 18px 28px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface); box-shadow: var(--shadow); z-index: 10;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-avatar {
+    width: 38px; height: 38px; background: linear-gradient(135deg, #0b6fdb, #0099cc);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .chat-title { font-size: 15px; font-weight: 800; }
+  .chat-subtitle { font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
+  .header-badge {
+    background: var(--accent-light); color: var(--accent); border-radius: 6px;
+    padding: 4px 10px; font-size: 10px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace; border: 1px solid #c5dcfa;
+  }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .icon-btn {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text-dim); padding: 7px 14px; cursor: pointer; font-size: 12px;
+    font-weight: 600; transition: all 0.2s; font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  .messages {
+    flex: 1; overflow-y: auto; padding: 28px;
+    display: flex; flex-direction: column; gap: 18px;
+    scroll-behavior: smooth; background: var(--bg);
+  }
+  .messages::-webkit-scrollbar { width: 5px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .welcome {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 18px; text-align: center; padding: 40px;
+    animation: fadeIn 0.5s ease;
+  }
+  .welcome-icon {
+    width: 72px; height: 72px; background: linear-gradient(135deg, #0b6fdb, #0099cc);
+    border-radius: 20px; display: flex; align-items: center; justify-content: center;
+    font-size: 36px; box-shadow: var(--shadow-lg);
+  }
+  .welcome h2 { font-size: 26px; font-weight: 800; }
+  .welcome p { color: var(--text-dim); font-size: 14px; max-width: 400px; line-height: 1.7; }
+  .welcome-notice {
+    background: var(--red-light); border: 1px solid #fac9c4; border-radius: 10px;
+    padding: 10px 18px; font-size: 12px; color: #b03a2e; max-width: 400px; line-height: 1.5;
+  }
+  .welcome-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px; }
+  .chip {
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px;
+    padding: 7px 16px; font-size: 12px; color: var(--text-dim); cursor: pointer;
+    transition: all 0.2s; font-weight: 500; box-shadow: var(--shadow);
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  .msg { display: flex; gap: 12px; animation: fadeSlide 0.3s ease; max-width: 840px; }
+  .msg.user { flex-direction: row-reverse; align-self: flex-end; }
+  .msg.ai { align-self: flex-start; }
+
+  .avatar { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .avatar.ai-av { background: linear-gradient(135deg, #0b6fdb, #0099cc); box-shadow: 0 2px 8px rgba(11,111,219,0.25); }
+  .avatar.user-av { background: #e2eaf3; border: 1px solid var(--border); }
+
+  .bubble { padding: 13px 17px; border-radius: 14px; font-size: 14px; line-height: 1.7; max-width: 640px; box-shadow: var(--shadow); }
+  .msg.user .bubble { background: var(--user-bubble); color: #fff; border-top-right-radius: 4px; font-weight: 500; }
+  .msg.ai .bubble { background: var(--ai-bubble); border: 1px solid var(--border); border-top-left-radius: 4px; }
+
+  .bubble h1, .bubble h2 { font-size: 15px; font-weight: 800; margin: 12px 0 6px; color: var(--accent); }
+  .bubble h3 { font-size: 13.5px; font-weight: 700; margin: 10px 0 5px; }
+  .bubble strong { font-weight: 700; }
+  .bubble code { background: var(--surface2); padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--accent); border: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; }
+  .bubble pre { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; overflow-x: auto; margin: 8px 0; }
+  .bubble pre code { background: none; border: none; padding: 0; }
+  .bubble ul, .bubble ol { padding-left: 20px; margin: 6px 0; }
+  .bubble li { margin: 4px 0; }
+  .bubble p { margin: 5px 0; }
+
+  .med-disclaimer {
+    margin-top: 10px; background: var(--red-light);
+    border-left: 3px solid var(--red); border-radius: 0 6px 6px 0;
+    padding: 7px 10px; font-size: 11px; color: #b03a2e;
+  }
+
+  .sources { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .source-tag {
+    background: var(--accent-light); border: 1px solid #c5dcfa;
+    border-radius: 6px; padding: 3px 9px; font-size: 10px; color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .typing-bubble { padding: 14px 18px; }
+  .typing-dots { display: flex; gap: 5px; align-items: center; height: 20px; }
+  .typing-dots span { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; animation: bounce 1.2s infinite; opacity: 0.6; }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  .input-area { padding: 18px 28px 22px; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -4px 16px rgba(11,111,219,0.06); }
+  .input-wrapper {
+    display: flex; gap: 10px; align-items: flex-end;
+    background: var(--surface2); border: 1.5px solid var(--border); border-radius: 14px;
+    padding: 12px 16px; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input-wrapper:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(11,111,219,0.1); }
+  #chatInput {
+    flex: 1; background: transparent; border: none; outline: none; color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; resize: none;
+    max-height: 140px; line-height: 1.5; font-weight: 500;
+  }
+  #chatInput::placeholder { color: var(--text-dim); font-weight: 400; }
+  .send-btn {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), #0099cc);
+    border: none; color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
+    transition: transform 0.1s, opacity 0.2s;
+    box-shadow: 0 4px 12px rgba(11,111,219,0.3);
+  }
+  .send-btn:hover { opacity: 0.9; transform: scale(1.05); }
+  .send-btn:active { transform: scale(0.96); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .input-hint { margin-top: 8px; font-size: 10px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; text-align: center; }
+
+  .toast {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 12px 18px; font-size: 13px; display: flex; align-items: center; gap: 8px;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index: 9999;
+    box-shadow: var(--shadow-lg); font-weight: 500;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: #b8eede; color: #00856e; }
+  .toast.error { border-color: #fac9c4; color: var(--red); }
+
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  @media (max-width: 700px) { .sidebar { display: none; } }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🏥</div>
+    <div>
+      <div class="logo-text">MedAssist AI</div>
+      <div class="logo-sub">RAG · Gemini · LangChain</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <span style="font-size:14px;flex-shrink:0">⚠️</span>
+    <span>For <strong>educational purposes only</strong>. Always consult a licensed physician for personal medical advice.</span>
+  </div>
+
+  <div class="status-row">
+    <div class="status-dot"></div>
+    <span id="statusText">Ready · Upload medical documents</span>
+  </div>
+
+  <div>
+    <div class="section-label" style="margin-bottom:10px">Upload Medical Files</div>
+    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <input type="file" id="fileInput" multiple accept=".pdf,.txt,.docx,.doc"/>
+      <div class="upload-icon">📋</div>
+      <p>Drop files here or <strong>click to browse</strong><br/>Clinical docs, research papers, guidelines</p>
+    </div>
+    <button class="upload-btn" id="uploadBtn" onclick="uploadFiles()">🔬 Upload & Index</button>
+  </div>
+
+  <div>
+    <div class="section-label" style="margin-bottom:10px">Add Medical URL</div>
+    <div class="url-row">
+      <input class="url-input" id="urlInput" placeholder="https://pubmed.ncbi.nlm.nih.gov/..." />
+      <button class="url-btn" onclick="addURL()">+</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label" style="margin-bottom:10px">Knowledge Base <span id="docCount" style="color:var(--accent)"></span></div>
+    <div class="docs-list" id="docsList">
+      <div style="font-size:12px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;">No documents loaded</div>
+    </div>
+  </div>
+
+  <button class="clear-btn" onclick="clearAll()">🗑 Clear All Documents</button>
+</aside>
+
+<main class="main">
+  <div class="chat-header">
+    <div class="header-left">
+      <div class="header-avatar">🩺</div>
+      <div>
+        <div class="chat-title">MedAssist AI</div>
+        <div class="chat-subtitle" id="headerSub">General medical Q&A · Upload docs for RAG</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="header-badge" id="ragBadge">GENERAL MODE</span>
+      <button class="icon-btn" onclick="clearChat()">↺ New Chat</button>
+    </div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcomeScreen">
+      <div class="welcome-icon">🏥</div>
+      <h2>MedAssist AI</h2>
+      <p>Your intelligent medical information assistant. Upload clinical documents, research papers, or drug guidelines — or ask general medical questions powered by Gemini.</p>
+      <div class="welcome-notice">⚕️ This tool is for <strong>educational purposes only</strong>. It does not replace professional medical diagnosis or treatment.</div>
+      <div class="welcome-chips">
+        <div class="chip" onclick="useChip(this)">What are symptoms of Type 2 diabetes?</div>
+        <div class="chip" onclick="useChip(this)">Explain this medication's side effects</div>
+        <div class="chip" onclick="useChip(this)">Summarize this clinical study</div>
+        <div class="chip" onclick="useChip(this)">Common drug interactions to avoid</div>
+        <div class="chip" onclick="useChip(this)">Treatment guidelines for hypertension</div>
+        <div class="chip" onclick="useChip(this)">How to read a lab report?</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-wrapper">
+      <textarea id="chatInput" placeholder="Ask a medical question…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+    <div class="input-hint">⚕️ Educational use only · Not a substitute for professional medical advice · Powered by Gemini 1.5 Flash</div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function renderMd(text) {
+  return text
+    .replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => `<pre><code>${esc(code.trim())}</code></pre>`)
+    .replace(/`([^`]+)`/g, (_, c) => `<code>${esc(c)}</code>`)
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^\* (.+)$/gm, '<li>$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
+    .replace(/\n\n/g, '</p><p>').trim();
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let docs = [], pendingFiles = [], isLoading = false;
+
+window.onload = () => {
+  fetchDocs();
+  const zone = document.getElementById('dropZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); pendingFiles = Array.from(e.dataTransfer.files); updateDZ(); });
+  document.getElementById('fileInput').addEventListener('change', e => { pendingFiles = Array.from(e.target.files); updateDZ(); });
+};
+
+function updateDZ() {
+  if (pendingFiles.length) document.querySelector('.upload-zone p').innerHTML = `<strong>${pendingFiles.length} file(s) ready</strong><br/>${pendingFiles.map(f=>f.name).join(', ')}`;
+}
+
+async function uploadFiles() {
+  if (!pendingFiles.length) { toast('⚠️ Select files first', 'error'); return; }
+  const btn = document.getElementById('uploadBtn');
+  btn.textContent = '⏳ Indexing...'; btn.disabled = true;
+  for (const file of pendingFiles) {
+    const fd = new FormData(); fd.append('file', file);
+    try {
+      const data = await (await fetch('/upload', {method:'POST', body:fd})).json();
+      data.success ? toast(`✅ ${file.name} → ${data.chunks} chunks`, 'success') : toast(`❌ ${data.detail}`, 'error');
+    } catch(e) { toast(`❌ ${e.message}`, 'error'); }
+  }
+  pendingFiles = []; document.getElementById('fileInput').value = '';
+  btn.textContent = '🔬 Upload & Index'; btn.disabled = false;
+  await fetchDocs();
+}
+
+async function addURL() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) { toast('⚠️ Enter a URL', 'error'); return; }
+  toast('🔎 Scraping…');
+  try {
+    const data = await (await fetch('/add-url', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url})})).json();
+    if (data.success) { toast(`✅ Scraped → ${data.chunks} chunks`, 'success'); document.getElementById('urlInput').value=''; await fetchDocs(); }
+    else toast(`❌ ${data.detail}`, 'error');
+  } catch(e) { toast(`❌ ${e.message}`, 'error'); }
+}
+
+async function fetchDocs() {
+  try { docs = (await (await fetch('/documents')).json()).files || []; renderDocs(); } catch(e) {}
+}
+
+function renderDocs() {
+  const list = document.getElementById('docsList');
+  const badge = document.getElementById('ragBadge');
+  document.getElementById('docCount').textContent = docs.length ? `(${docs.length})` : '';
+  if (!docs.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text-dim);font-family:\'JetBrains Mono\',monospace;">No documents loaded</div>';
+    document.getElementById('headerSub').textContent = 'General medical Q&A · Upload docs for RAG';
+    document.getElementById('statusText').textContent = 'Ready · Upload medical documents';
+    badge.textContent = 'GENERAL MODE'; badge.style.cssText = '';
+    return;
+  }
+  document.getElementById('headerSub').textContent = `RAG active · ${docs.length} medical source(s)`;
+  document.getElementById('statusText').textContent = `RAG active · ${docs.length} doc(s)`;
+  badge.textContent = 'RAG MODE'; badge.style.background='var(--accent-light)'; badge.style.color='var(--accent)';
+  list.innerHTML = docs.map(d => {
+    const isURL = d.startsWith('http');
+    const icon = isURL ? '🌐' : d.endsWith('.pdf') ? '📕' : d.endsWith('.docx') ? '📝' : '📄';
+    const name = isURL ? new URL(d).hostname : d;
+    return `<div class="doc-item"><span>${icon}</span><span class="doc-name" title="${d}">${name}</span><span class="doc-badge">INDEXED</span></div>`;
+  }).join('');
+}
+
+function useChip(el) { document.getElementById('chatInput').value = el.textContent; sendMessage(); }
+function handleKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,140)+'px'; }
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg || isLoading) return;
+  document.getElementById('welcomeScreen')?.remove();
+  isLoading = true; input.value = ''; input.style.height='auto';
+  document.getElementById('sendBtn').disabled = true;
+  appendMsg('user', msg);
+  const tid = appendTyping();
+  try {
+    const data = await (await fetch('/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:msg})})).json();
+    removeTyping(tid);
+    appendMsg('ai', data.answer || data.detail || 'Something went wrong.', data.sources || []);
+  } catch(e) { removeTyping(tid); appendMsg('ai', `Error: ${e.message}`, []); }
+  isLoading = false; document.getElementById('sendBtn').disabled = false; input.focus();
+}
+
+function appendMsg(role, text, sources=[]) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const av = `<div class="avatar ${role==='ai'?'ai-av':'user-av'}">${role==='ai'?'🩺':'👤'}</div>`;
+  const content = role==='ai' ? `<p>${renderMd(text)}</p>` : esc(text);
+  const disclaimer = role==='ai' ? `<div class="med-disclaimer">⚕️ For educational purposes only. Consult a healthcare professional for personal medical advice.</div>` : '';
+  const srcs = sources.length ? `<div class="sources">${sources.map(s=>`<span class="source-tag">📎 ${s.startsWith('http')?new URL(s).hostname:s.split('/').pop()}</span>`).join('')}</div>` : '';
+  div.innerHTML = `${av}<div class="bubble">${content}${srcs}${disclaimer}</div>`;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function appendTyping() {
+  const msgs = document.getElementById('messages'), id='t'+Date.now(), div=document.createElement('div');
+  div.className='msg ai'; div.id=id;
+  div.innerHTML=`<div class="avatar ai-av">🩺</div><div class="bubble typing-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return id;
+}
+function removeTyping(id) { document.getElementById(id)?.remove(); }
+
+async function clearChat() { await fetch('/clear-chat',{method:'POST'}); document.getElementById('messages').innerHTML=''; toast('✓ Conversation cleared','success'); }
+async function clearAll() { if(!confirm('Clear all documents and history?')) return; await fetch('/documents',{method:'DELETE'}); await fetchDocs(); clearChat(); toast('✓ Cleared','success'); }
+
+let _tt;
+function toast(msg, type='') {
+  const el=document.getElementById('toast'); el.textContent=msg; el.className=`toast ${type} show`;
+  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>
