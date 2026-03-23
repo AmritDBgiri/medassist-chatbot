@@ -20,7 +20,7 @@ from langchain.memory import ConversationBufferWindowMemory
 from langchain.prompts import PromptTemplate
 
 # ─── Config ───────────────────────────────────────────────────────────────────
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyAw896DrAxehIdHXUwerklqzfANBSCtQ0g")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
