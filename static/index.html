@@ -385,17 +385,52 @@ function updateDZ() {
 async function uploadFiles() {
   if (!pendingFiles.length) { toast('⚠️ Select files first', 'error'); return; }
   const btn = document.getElementById('uploadBtn');
-  btn.textContent = '⏳ Indexing...'; btn.disabled = true;
+  btn.textContent = '⏳ Uploading...'; btn.disabled = true;
+
   for (const file of pendingFiles) {
     const fd = new FormData(); fd.append('file', file);
     try {
       const data = await (await fetch('/upload', {method:'POST', body:fd})).json();
-      data.success ? toast(`✅ ${file.name} → ${data.chunks} chunks`, 'success') : toast(`❌ ${data.detail}`, 'error');
+      if (data.success) {
+        toast(`📤 ${file.name} uploaded! Indexing in background...`, 'success');
+        // Poll for status
+        pollUploadStatus(file.name);
+      } else {
+        toast(`❌ ${data.detail || 'Upload failed'}`, 'error');
+      }
     } catch(e) { toast(`❌ ${e.message}`, 'error'); }
   }
   pendingFiles = []; document.getElementById('fileInput').value = '';
   btn.textContent = '🔬 Upload & Index'; btn.disabled = false;
+  document.querySelector('.upload-zone p').innerHTML = 'Drop files here or <strong>click to browse</strong><br/>Clinical docs, research papers, guidelines';
   await fetchDocs();
+}
+
+async function pollUploadStatus(filename) {
+  let attempts = 0;
+  const maxAttempts = 60; // 5 minutes max
+  const interval = setInterval(async () => {
+    attempts++;
+    try {
+      const data = await (await fetch(`/upload-status/${encodeURIComponent(filename)}`)).json();
+      if (data.status === 'done') {
+        clearInterval(interval);
+        toast(`✅ ${filename} → ${data.chunks} chunks indexed!`, 'success');
+        await fetchDocs();
+      } else if (data.status === 'error') {
+        clearInterval(interval);
+        toast(`❌ ${filename}: ${data.msg}`, 'error');
+        await fetchDocs();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        toast(`⚠️ ${filename}: indexing timeout`, 'error');
+      }
+      // Update status text while processing
+      if (data.status === 'processing') {
+        document.getElementById('statusText').textContent = `⏳ ${data.msg || 'Indexing...'}`;
+      }
+    } catch(e) { clearInterval(interval); }
+  }, 5000); // Check every 5 seconds
 }
 
 async function addURL() {
