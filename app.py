@@ -47,7 +47,7 @@ uploaded_files: List[str] = []
 # ─── LLM & Embeddings ────────────────────────────────────────────────────────
 def get_llm():
     return ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-2.0-flash",
         google_api_key=GOOGLE_API_KEY,
         temperature=0.3,
         convert_system_message_to_human=True,
@@ -55,7 +55,7 @@ def get_llm():
 
 def get_embeddings():
     return GoogleGenerativeAIEmbeddings(
-        model="models/embedding-001",
+        model="models/text-embedding-004",
         google_api_key=GOOGLE_API_KEY,
     )
 
